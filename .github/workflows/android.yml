@@ -27,6 +27,11 @@ jobs:
         with:
           gradle-version: '8.9'
 
+      - name: Fix Java target
+        working-directory: source/JARVIS_Android
+        run: |
+          find app -type f \( -name '*.gradle' -o -name '*.gradle.kts' \) -exec sed -i 's/VERSION_1_8/VERSION_17/g' {} +
+
       - name: Build APK
         working-directory: source/JARVIS_Android
         run: gradle assembleDebug
@@ -36,4 +41,3 @@ jobs:
         with:
           name: JARVIS-APK
           path: source/JARVIS_Android/app/build/outputs/apk/debug/app-debug.apk
-          
