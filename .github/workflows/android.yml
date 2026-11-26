@@ -1,4 +1,5 @@
 
+
 name: Build JARVIS APK
 
 on:
@@ -28,29 +29,35 @@ jobs:
         with:
           gradle-version: '8.9'
 
-      - name: Build APK
+      - name: Set JVM targets
         working-directory: source/JARVIS_Android
         run: |
-          cat > "$GITHUB_WORKSPACE/force-jvm17.init.gradle" <<'EOF'
+          cat > force-jvm17.init.gradle <<'EOF'
           import org.gradle.api.tasks.compile.JavaCompile
 
           allprojects {
-            tasks.withType(JavaCompile).configureEach {
-              sourceCompatibility = '17'
-              targetCompatibility = '17'
-            }
+            afterEvaluate {
+              tasks.withType(JavaCompile).configureEach {
+                sourceCompatibility = '17'
+                targetCompatibility = '17'
+              }
 
-            tasks.configureEach { task ->
-              if (task.name.startsWith('compile') &&
-                  task.name.endsWith('Kotlin') &&
-                  task.hasProperty('kotlinOptions')) {
-                task.kotlinOptions.jvmTarget = '17'
+              tasks.configureEach { task ->
+                if (task.name.startsWith('compile') && task.name.endsWith('Kotlin')) {
+                  task.doFirst {
+                    if (task.hasProperty('kotlinOptions')) {
+                      task.kotlinOptions.jvmTarget = '17'
+                    }
+                  }
+                }
               }
             }
           }
           EOF
 
-          gradle -I "$GITHUB_WORKSPACE/force-jvm17.init.gradle" assembleDebug
+      - name: Build APK
+        working-directory: source/JARVIS_Android
+        run: gradle -I force-jvm17.init.gradle assembleDebug
 
       - name: Save APK
         uses: actions/upload-artifact@v4
